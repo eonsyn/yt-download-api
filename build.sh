@@ -1,3 +1,3 @@
-#!/bin/bash
-apt-get update && apt-get install -y yt-dlp ffmpeg
+# Ensure yt-dlp is installed
+pip install yt-dlp
 npm install
