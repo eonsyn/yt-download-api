@@ -1,14 +1,37 @@
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const cloudinary = require("cloudinary").v2;
 const cors = require("cors");
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = 5000;
 const execPromise = promisify(exec);
+
+// Set yt-dlp binary path
+const ytDlpPath = path.join(__dirname, "yt-dlp");
+
+// Function to download yt-dlp binary if not exists
+async function downloadYtDlp() {
+  if (!fs.existsSync(ytDlpPath)) {
+    console.log("Downloading yt-dlp binary...");
+    try {
+      await execPromise(
+        `curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ${ytDlpPath} && chmod +x ${ytDlpPath}`
+      );
+      console.log("yt-dlp downloaded successfully.");
+    } catch (error) {
+      console.error("Error downloading yt-dlp:", error);
+    }
+  }
+}
+
+// Call function at startup
+downloadYtDlp();
 
 // Configure Cloudinary
 cloudinary.config({
@@ -28,8 +51,8 @@ app.get("/download", async (req, res) => {
       return res.status(400).json({ error: "No URL provided" });
     }
 
-    // Extract direct MP4 URL using yt-dlp
-    const { stdout } = await execPromise(`yt-dlp -f mp4 --get-url "${videoUrl}"`);
+    // Use the local yt-dlp binary to get direct MP4 URL
+    const { stdout } = await execPromise(`${ytDlpPath} -f mp4 --get-url "${videoUrl}"`);
     const directVideoUrl = stdout.trim();
     console.log("Direct Video URL:", directVideoUrl);
 
