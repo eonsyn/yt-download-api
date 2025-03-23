@@ -5,6 +5,7 @@ const { exec } = require("child_process");
 const { promisify } = require("util");
 const cloudinary = require("cloudinary").v2;
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -20,6 +21,9 @@ cloudinary.config({
 // Enable CORS
 app.use(cors());
 
+// Path to cookies.txt file (You can set this in .env)
+const cookiesPath = process.env.COOKIES_PATH || path.join(__dirname, "cookies.txt");
+
 // API route to download and upload YouTube videos
 app.get("/download", async (req, res) => {
   try {
@@ -28,8 +32,8 @@ app.get("/download", async (req, res) => {
       return res.status(400).json({ error: "No URL provided" });
     }
 
-    // Extract direct MP4 URL using yt-dlp
-    const { stdout } = await execPromise(`yt-dlp -f mp4 --get-url "${videoUrl}"`);
+    // Extract direct MP4 URL using yt-dlp with cookies
+    const { stdout } = await execPromise(`yt-dlp --cookies "${cookiesPath}" -f mp4 --get-url "${videoUrl}"`);
     const directVideoUrl = stdout.trim();
     console.log("Direct Video URL:", directVideoUrl);
 
